@@ -24,6 +24,7 @@ def insert_data(item):
 
     # insert documents
     collection.insert_many(cookbookDocuments)
+    client.close()
 
     # find documents 
     #result = collection.find_one({ "isbn": "1940352649" })
@@ -50,6 +51,7 @@ def update_data(item):
 
     # insert documents
     result = collection.update_many(query_filter, update_operation)
+    client.close()
     
     # print results
     #print("Documents found:\n", result)
