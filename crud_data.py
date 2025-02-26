@@ -1,9 +1,8 @@
 import pymongo
 import datetime
 from datetime import datetime
-import PriceDropAlert.models
 
-def insert_data(item):
+def insert_data(item_list):
     # connect to your Atlas cluster
     client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
@@ -11,26 +10,22 @@ def insert_data(item):
     collection = client['price_drop_alert']['amazon_item_lookup']
 
     # create new documents
-    cookbookDocuments = [
-        {
-            "isbn": item.isbn,
-            "price": item.price,
-            "datetime_created": item.datetime_created,
-            "name": item.name,
-            "author": item.author,
-            "url": item.url
-        }
-    ]
+    cookbookDocuments = []
+
+    for item in item_list:
+        i = {
+                "isbn": item.isbn,
+                "price": item.price,
+                "datetime_created": item.datetime_created,
+                "name": item.name,
+                "author": item.author,
+                "url": item.url
+            }
+        cookbookDocuments.append(i)
 
     # insert documents
     collection.insert_many(cookbookDocuments)
     client.close()
-
-    # find documents 
-    #result = collection.find_one({ "isbn": "1940352649" })
-
-    # print results
-    #print("Document found:\n", result)
 
 def update_data(item):
     # connect to your Atlas cluster
@@ -52,6 +47,3 @@ def update_data(item):
     # insert documents
     result = collection.update_many(query_filter, update_operation)
     client.close()
-    
-    # print results
-    #print("Documents found:\n", result)
