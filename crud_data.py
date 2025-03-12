@@ -7,24 +7,28 @@ def insert_data(item_list):
     client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
     # get the database and collection on which to run the operation
-    collection = client['price_drop_alert']['amazon_item_lookup']
+    #collection = client['price_drop_alert']['amazon_item_lookup']
+    collection = client['price_drop_alert']['uniqlo_item_lookup']
 
     # create new documents
-    cookbookDocuments = []
+    item_documents = []
 
     for item in item_list:
         i = {
-                "isbn": item.isbn,
+                "product_id": item.product_id,
                 "price": item.price,
                 "datetime_created": item.datetime_created,
                 "name": item.name,
                 "author": item.author,
-                "url": item.url
+                "url": item.url,
+                "format": item.format,
+                "currency": item.currency,
+                "brand": item.brand
             }
-        cookbookDocuments.append(i)
+        item_documents.append(i)
 
     # insert documents
-    collection.insert_many(cookbookDocuments)
+    collection.insert_many(item_documents)
     client.close()
 
 def update_data(item):
@@ -35,7 +39,7 @@ def update_data(item):
     collection = client['price_drop_alert']['amazon_item_lookup']
 
     # query documents
-    query_filter = {'isbn' : '0593582128'}
+    query_filter = {'product_id' : '0593582128'}
 
     # update items
     update_operation = { '$set' :
