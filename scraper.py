@@ -3,7 +3,12 @@ from selenium import webdriver
 
 from selenium_stealth import stealth
 
-def get_price():
+from price_parser import Price
+
+import PriceDropAlert.models as item
+import PriceDropAlert.data_logic as data_logic
+
+def get_price(item_list):
     options = webdriver.ChromeOptions()
 
     options.add_argument("--headless")
@@ -36,19 +41,57 @@ def get_price():
 
     )
 
-    # connect to the target page
+    item_list_to_insert = []
+    for item in item_list:
+        #connect to the URL
+        driver.get(item.url)
+        htmlMarkup = driver.page_source
 
-    #the below URL works!
-    #driver.get("https://vuoriclothing.com/products/womens-performance-jogger-black-heather?variant=39975074660455&msclkid=54f1bccea82817c3d8dddb0d19f8da6a&utm_source=bing&utm_medium=cpc&utm_campaign=WP_Bing_USA_Shopping_Nonbrnd_Shopping_C_FF_Womens_Active&utm_term=4578160299221560&utm_content=All")
-    driver.get("https://www.amazon.com/Complete-Mediterranean-Cookbook-Gift-Kitchen-Tested/dp/1948703947/ref=tmm_hrd_swatch_0")
+        soup = BeautifulSoup(htmlMarkup, 'html5lib') # If this line causes an error, run 'pip install html5lib' or install html5lib
+        print(soup.prettify())
 
-    htmlMarkup = driver.page_source
+        if item.format == 'Hardcover':
+            try:
+                hardcoverPrice = soup.find('div', attrs = {'id':'tmm-grid-swatch-HARDCOVER'}) 
+                print(hardcoverPrice)
+                for row in hardcoverPrice.find_all('span', attrs = {'class':'slot-price'}):
+                    price = Price.fromstring(row.text)
+                    print(price.amount_text)
+                    if item.price > price.amount_float:
+                        item.price = price.amount_float
+                        item_list_to_insert.append(item)
+            except:
+                print('Unable to retrieve price for: ' + item.name)
 
-    soup = BeautifulSoup(htmlMarkup, 'html5lib') # If this line causes an error, run 'pip install html5lib' or install html5lib
-
-    hardcoverPrice = soup.find('div', attrs = {'id':'tmm-grid-swatch-HARDCOVER'}) 
-    for row in hardcoverPrice.find_all('span', attrs = {'class':'slot-price'}):
-        print(row.text)
+        elif item.brand == 'Vuori':
+            try: 
+                clothingPrice = soup.find('main', attrs={'id': 'main-content'})
+                print('Clothing Price: ')
+                print(clothingPrice)
+                for row in clothingPrice.find_all('h3', attrs={'data-testid': 'productdescriptionprice-price'}):
+                    price = Price.fromstring(row.text)
+                    print (price.amount_text)
+                    if item.price > price.amount_float:
+                        item.price = price.amount_float
+                        item_list_to_insert.append(item)
+            except:
+                print('Unable to retrieve price for: ' + item.name)
+        elif item.brand == 'Uniqlo':
+            try:
+                clothingPrice = soup.find('div', attrs={'id': 'root'})
+                print('Clothing Price: ')
+                print(clothingPrice)
+                for row in clothingPrice.find_all('p', attrs={'class': 'fr-ec-price-text fr-ec-price-text--large fr-ec-price-text--color-primary-dark fr-ec-text-transform-normal'}):
+                    price = Price.fromstring(row.text)
+                    print (price.amount_text)
+                    if item.price > price.amount_float:
+                        item.price = price.amount_float
+                        item_list_to_insert.append(item)
+            except:
+                print('Unable to retrieve price for: ' + item.name)
+    
+    if len(item_list_to_insert) > 0:
+        data_logic.insert_items(item_list_to_insert)
 
     # get the current window size
 
