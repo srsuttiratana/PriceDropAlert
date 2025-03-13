@@ -48,47 +48,49 @@ def get_price(item_list):
         htmlMarkup = driver.page_source
 
         soup = BeautifulSoup(htmlMarkup, 'html5lib') # If this line causes an error, run 'pip install html5lib' or install html5lib
-        print(soup.prettify())
+        #print(soup.prettify())
 
-        if item.format == 'Hardcover':
-            try:
-                hardcoverPrice = soup.find('div', attrs = {'id':'tmm-grid-swatch-HARDCOVER'}) 
-                print(hardcoverPrice)
-                for row in hardcoverPrice.find_all('span', attrs = {'class':'slot-price'}):
-                    price = Price.fromstring(row.text)
-                    print(price.amount_text)
-                    if item.price > price.amount_float:
-                        item.price = price.amount_float
-                        item_list_to_insert.append(item)
-            except:
-                print('Unable to retrieve price for: ' + item.name)
+        if item.type == 'Book':
+            if item.format == 'Hardcover':
+                try:
+                    hardcoverPrice = soup.find('div', attrs = {'id':'tmm-grid-swatch-HARDCOVER'}) 
+                    print(hardcoverPrice)
+                    for row in hardcoverPrice.find_all('span', attrs = {'class':'slot-price'}):
+                        price = Price.fromstring(row.text)
+                        print(price.amount_text)
+                        if item.price > price.amount_float:
+                            item.price = price.amount_float
+                            item_list_to_insert.append(item)
+                except:
+                    print('Unable to retrieve price for: ' + item.name)
 
-        elif item.brand == 'Vuori':
-            try: 
-                clothingPrice = soup.find('main', attrs={'id': 'main-content'})
-                print('Clothing Price: ')
-                print(clothingPrice)
-                for row in clothingPrice.find_all('h3', attrs={'data-testid': 'productdescriptionprice-price'}):
-                    price = Price.fromstring(row.text)
-                    print (price.amount_text)
-                    if item.price > price.amount_float:
-                        item.price = price.amount_float
-                        item_list_to_insert.append(item)
-            except:
-                print('Unable to retrieve price for: ' + item.name)
-        elif item.brand == 'Uniqlo':
-            try:
-                clothingPrice = soup.find('div', attrs={'id': 'root'})
-                print('Clothing Price: ')
-                print(clothingPrice)
-                for row in clothingPrice.find_all('p', attrs={'class': 'fr-ec-price-text fr-ec-price-text--large fr-ec-price-text--color-primary-dark fr-ec-text-transform-normal'}):
-                    price = Price.fromstring(row.text)
-                    print (price.amount_text)
-                    if item.price > price.amount_float:
-                        item.price = price.amount_float
-                        item_list_to_insert.append(item)
-            except:
-                print('Unable to retrieve price for: ' + item.name)
+        elif item.type == 'Clothing':
+            if item.brand == 'Vuori':
+                try: 
+                    clothingPrice = soup.find('main', attrs={'id': 'main-content'})
+                    #print('Clothing Price: ')
+                    #print(clothingPrice)
+                    for row in clothingPrice.find_all('h3', attrs={'data-testid': 'productdescriptionprice-price'}):
+                        price = Price.fromstring(row.text)
+                        print (price.amount_text)
+                        if item.price > price.amount_float:
+                            item.price = price.amount_float
+                            item_list_to_insert.append(item)
+                except:
+                    print('Unable to retrieve price for: ' + item.name)
+            elif item.brand == 'Uniqlo':
+                try:
+                    clothingPrice = soup.find('div', attrs={'id': 'root'})
+                    #print('Clothing Price: ')
+                    #print(clothingPrice)
+                    for row in clothingPrice.find_all('p', attrs={'class': 'fr-ec-price-text fr-ec-price-text--large fr-ec-price-text--color-primary-dark fr-ec-text-transform-normal'}):
+                        price = Price.fromstring(row.text)
+                        print (price.amount_text)
+                        if item.price > price.amount_float:
+                            item.price = price.amount_float
+                            item_list_to_insert.append(item)
+                except:
+                    print('Unable to retrieve price for: ' + item.name)
     
     if len(item_list_to_insert) > 0:
         data_logic.insert_items(item_list_to_insert)

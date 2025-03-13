@@ -18,10 +18,17 @@ try:
 
     for i in all_items:
         i['id'] = str(i.pop('_id'))
-        item_temp = item.Item(**i)
+        i['type'] = str(i.pop('type'))
+        item_temp = {}
+        if i['type'] == 'Book':
+            item_temp = item.Book(**i)
+        elif i['type'] == 'Clothing':
+            item_temp = item.Clothing(**i)
         print('item_temp: ')
         print(item_temp)
-        list_of_items.append(item_temp)
+        
+        if item_temp:
+            list_of_items.append(item_temp)
     client.close()
     scraper.get_price(list_of_items)
 
