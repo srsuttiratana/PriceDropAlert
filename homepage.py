@@ -14,9 +14,21 @@ try:
     #collection = client['price_drop_alert']['amazon_item_lookup']
     collection = client['price_drop_alert']['uniqlo_item_lookup']
 
-    all_items = collection.find({})
+    all_items = [
+                    {
+                        '$group': {
+                            '_id': '$product_id',  # Replace 'distinctField' with the field you want distinct values for, which is product_id
+                            'doc': {'$first': '$$ROOT'}  # $$ROOT includes all fields of the document
+                        }
+                    },
+                    {
+                        '$replaceRoot': {'newRoot': '$doc'}  # Replace the root with the document
+                    }
+                ]
 
-    for i in all_items:
+    result = list(collection.aggregate(all_items))
+
+    for i in result:
         i['id'] = str(i.pop('_id'))
         i['type'] = str(i.pop('type'))
         item_temp = {}
