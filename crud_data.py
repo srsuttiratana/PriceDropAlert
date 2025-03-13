@@ -7,7 +7,6 @@ def insert_data(item_list):
     client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
     # get the database and collection on which to run the operation
-    #collection = client['price_drop_alert']['amazon_item_lookup']
     collection = client['price_drop_alert']['item_lookup']
 
     # create new documents
@@ -18,25 +17,40 @@ def insert_data(item_list):
             i = {
                     "product_id": item.product_id,
                     "price": item.price,
-                    "datetime_created": item.datetime_created,
+                    "datetime_created": datetime.now(),
                     "name": item.name,
                     "author": item.author,
                     "url": item.url,
                     "format": item.format,
                     "currency": item.currency,
-                    "type" : item.type
+                    "type" : item.type,
+                    "seller" : item.seller
                 }
             item_documents.append(i)
         elif item.type == 'Clothing':
             i = {
                     "product_id": item.product_id,
                     "price": item.price,
-                    "datetime_created": item.datetime_created,
+                    "datetime_created": datetime.now(),
                     "name": item.name,
                     "url": item.url,
                     "currency": item.currency,
                     "brand": item.brand,
-                    "type" : item.type
+                    "type" : item.type,
+                    "seller" : item.seller
+                }
+            item_documents.append(i)
+        elif item.type == 'Video Game':
+            i = {
+                    "product_id": item.product_id,
+                    "price": item.price,
+                    "datetime_created": datetime.now(),
+                    "name": item.name,
+                    "url": item.url,
+                    "currency": item.currency,
+                    "type" : item.type,
+                    "seller" : item.seller,
+                    "format" : item.format
                 }
             item_documents.append(i)
 
