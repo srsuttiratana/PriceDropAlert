@@ -12,19 +12,23 @@ list_of_items = []
 try:
     # get the database and collection on which to run the operation
     #collection = client['price_drop_alert']['amazon_item_lookup']
-    collection = client['price_drop_alert']['uniqlo_item_lookup']
+    #collection = client['price_drop_alert']['uniqlo_item_lookup']
+    collection = client['price_drop_alert']['item_lookup']
 
     all_items = [
-                    {
-                        '$group': {
-                            '_id': '$product_id',  # Replace 'distinctField' with the field you want distinct values for, which is product_id
-                            'doc': {'$first': '$$ROOT'}  # $$ROOT includes all fields of the document
-                        }
-                    },
-                    {
-                        '$replaceRoot': {'newRoot': '$doc'}  # Replace the root with the document
-                    }
-                ]
+        {
+            '$sort': {'id': -1}  # Sort by timestamp in descending order
+        },
+        {
+            '$group': {
+                '_id': '$product_id',  # Group by the field you want distinct values for
+                'latestEntry': {'$first': '$$ROOT'}  # Get the latest entry for each group
+            }
+        },
+        {
+            '$replaceRoot': {'newRoot': '$latestEntry'}  # Replace the root with the latest entry document
+        }
+    ]
 
     result = list(collection.aggregate(all_items))
 

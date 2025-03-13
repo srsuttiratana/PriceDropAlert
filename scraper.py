@@ -93,7 +93,7 @@ def get_price(item_list):
                     print('Unable to retrieve price for: ' + item.name)
     
     if len(item_list_to_insert) > 0:
-        data_logic.insert_items(item_list_to_insert)
+        data_logic.insert_items(item_list_to_insert, item_list)
 
     # get the current window size
 
