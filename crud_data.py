@@ -63,7 +63,7 @@ def update_data(item):
     client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
     # get the database and collection on which to run the operation
-    collection = client['price_drop_alert']['amazon_item_lookup']
+    collection = client['price_drop_alert']['item_lookup']
 
     # query documents
     query_filter = {'product_id' : '0593582128'}

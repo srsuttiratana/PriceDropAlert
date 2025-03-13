@@ -7,7 +7,7 @@ def insert_item(item):
 
     try:
         # get the database and collection on which to run the operation
-        collection = client['price_drop_alert']['amazon_item_lookup']
+        collection = client['price_drop_alert']['item_lookup']
 
         #get the item using the product_id, get the latest entry
         latest_single_item = collection.find_one({"product_id": item.product_id}, {"product_id": 1, "datetime_created": 1, "price": 1}, sort=[('_id', pymongo.DESCENDING)])
@@ -32,8 +32,7 @@ def insert_items(item_list_to_insert, item_list):
 
     try:
         # get the database and collection on which to run the operation
-        #collection = client['price_drop_alert']['amazon_item_lookup']
-        #collection = client['price_drop_alert']['uniqlo_item_lookup']
+        #collection = client['price_drop_alert']['item_lookup']
 
         #get list of product_ids
         #product_id_list = [item.product_id for item in item_list]
