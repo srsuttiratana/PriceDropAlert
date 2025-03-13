@@ -14,18 +14,31 @@ def insert_data(item_list):
     item_documents = []
 
     for item in item_list:
-        i = {
-                "product_id": item.product_id,
-                "price": item.price,
-                "datetime_created": item.datetime_created,
-                "name": item.name,
-                "author": item.author,
-                "url": item.url,
-                "format": item.format,
-                "currency": item.currency,
-                "brand": item.brand
-            }
-        item_documents.append(i)
+        if item.type == 'Book':
+            i = {
+                    "product_id": item.product_id,
+                    "price": item.price,
+                    "datetime_created": item.datetime_created,
+                    "name": item.name,
+                    "author": item.author,
+                    "url": item.url,
+                    "format": item.format,
+                    "currency": item.currency,
+                    "type" : item.type
+                }
+            item_documents.append(i)
+        elif item.type == 'Clothing':
+            i = {
+                    "product_id": item.product_id,
+                    "price": item.price,
+                    "datetime_created": item.datetime_created,
+                    "name": item.name,
+                    "url": item.url,
+                    "currency": item.currency,
+                    "brand": item.brand,
+                    "type" : item.type
+                }
+            item_documents.append(i)
 
     # insert documents
     collection.insert_many(item_documents)
