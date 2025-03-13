@@ -5,16 +5,14 @@ from datetime import date, datetime
 
 class Item(BaseModel):
     id: str = Field(default_factory=uuid.uuid4, alias="_id")
-    #author: str = Field(...)
     datetime_created: datetime = Field(...)
     product_id: str = Field(...)
     name: str = Field(...)
     price: float = Field(...)
     url: str = Field(...)
-    #format: str = Field(...)
     currency: str = Field(...)
-    #brand: str = Field(...)
     type: str = Field(...)
+    seller: str = Field(...)
 
     #class Config:
     #    allow_population_by_field_name = True
@@ -36,6 +34,9 @@ class Clothing(Item):
 
 class Book(Item):
     author: str = Field(...)
+    format: str = Field(...)
+
+class VideoGame(Item):
     format: str = Field(...)
 
 class ItemUpdate(BaseModel):

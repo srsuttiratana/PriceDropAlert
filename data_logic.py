@@ -56,6 +56,8 @@ def insert_items(item_list_to_insert, item_list):
             latest_item = latest_item_map.get(i.product_id, 'Default')
             #the item exists in the database
             if latest_item != 'Default': 
+                print(latest_item.price)
+                print(i.price)
                 if latest_item.price > i.price:
                     #if the item's price difference is at least 10%, then print for now
                     price_difference_percentage = ((latest_item.price - i.price) / latest_item.price)

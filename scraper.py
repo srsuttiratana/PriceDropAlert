@@ -7,6 +7,7 @@ from price_parser import Price
 
 import PriceDropAlert.models as item
 import PriceDropAlert.data_logic as data_logic
+import copy
 
 def get_price(item_list):
     options = webdriver.ChromeOptions()
@@ -65,7 +66,7 @@ def get_price(item_list):
                     print('Unable to retrieve price for: ' + item.name)
 
         elif item.type == 'Clothing':
-            if item.brand == 'Vuori':
+            if item.seller == 'Vuori':
                 try: 
                     clothingPrice = soup.find('main', attrs={'id': 'main-content'})
                     #print('Clothing Price: ')
@@ -78,7 +79,7 @@ def get_price(item_list):
                             item_list_to_insert.append(item)
                 except:
                     print('Unable to retrieve price for: ' + item.name)
-            elif item.brand == 'Uniqlo':
+            elif item.seller == 'Uniqlo':
                 try:
                     clothingPrice = soup.find('div', attrs={'id': 'root'})
                     #print('Clothing Price: ')
@@ -87,8 +88,24 @@ def get_price(item_list):
                         price = Price.fromstring(row.text)
                         print (price.amount_text)
                         if item.price > price.amount_float:
-                            item.price = price.amount_float
-                            item_list_to_insert.append(item)
+                            deep_copy_item = copy.deepcopy(item)
+                            deep_copy_item.price = price.amount_float
+                            item_list_to_insert.append(deep_copy_item)
+                except:
+                    print('Unable to retrieve price for: ' + item.name)
+        elif item.type == 'Video Game':
+            if item.seller == 'Best Buy':
+                try:
+                    gamePrice = soup.find('div', attrs={'class': 'pricing-price'})
+                    #print('Game Price: ')
+                    #print(gamePrice)
+                    for row in gamePrice.find_all('span', attrs={'aria-hidden': 'true'}):
+                        price = Price.fromstring(row.text)
+                        print (price.amount_text)
+                        if item.price > price.amount_float:
+                            deep_copy_item = copy.deepcopy(item)
+                            deep_copy_item.price = price.amount_float
+                            item_list_to_insert.append(deep_copy_item)
                 except:
                     print('Unable to retrieve price for: ' + item.name)
     

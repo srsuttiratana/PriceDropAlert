@@ -11,18 +11,16 @@ client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cl
 list_of_items = []
 try:
     # get the database and collection on which to run the operation
-    #collection = client['price_drop_alert']['amazon_item_lookup']
-    #collection = client['price_drop_alert']['uniqlo_item_lookup']
     collection = client['price_drop_alert']['item_lookup']
 
     all_items = [
         {
-            '$sort': {'id': -1}  # Sort by timestamp in descending order
+            '$sort': {'id': -1}  # Sort by id in descending order
         },
         {
             '$group': {
                 '_id': '$product_id',  # Group by the field you want distinct values for
-                'latestEntry': {'$first': '$$ROOT'}  # Get the latest entry for each group
+                'latestEntry': {'$last': '$$ROOT'}  # Get the latest entry for each group
             }
         },
         {
@@ -40,6 +38,8 @@ try:
             item_temp = item.Book(**i)
         elif i['type'] == 'Clothing':
             item_temp = item.Clothing(**i)
+        elif i['type'] == 'Video Game':
+            item_temp = item.VideoGame(**i)
         print('item_temp: ')
         print(item_temp)
         
