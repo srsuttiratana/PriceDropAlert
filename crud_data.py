@@ -8,7 +8,7 @@ def insert_data(item_list):
 
     # get the database and collection on which to run the operation
     #collection = client['price_drop_alert']['amazon_item_lookup']
-    collection = client['price_drop_alert']['uniqlo_item_lookup']
+    collection = client['price_drop_alert']['item_lookup']
 
     # create new documents
     item_documents = []

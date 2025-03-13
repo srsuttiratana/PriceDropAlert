@@ -7,6 +7,7 @@ from price_parser import Price
 
 import PriceDropAlert.models as item
 import PriceDropAlert.data_logic as data_logic
+import copy
 
 def get_price(item_list):
     options = webdriver.ChromeOptions()
@@ -87,8 +88,9 @@ def get_price(item_list):
                         price = Price.fromstring(row.text)
                         print (price.amount_text)
                         if item.price > price.amount_float:
-                            item.price = price.amount_float
-                            item_list_to_insert.append(item)
+                            deep_copy_item = copy.deepcopy(item)
+                            deep_copy_item.price = price.amount_float
+                            item_list_to_insert.append(deep_copy_item)
                 except:
                     print('Unable to retrieve price for: ' + item.name)
     
