@@ -24,7 +24,8 @@ def insert_data(item_list):
                     "format": item.format,
                     "currency": item.currency,
                     "type" : item.type,
-                    "seller" : item.seller
+                    "seller" : item.seller,
+                    "original_price": item.original_price
                 }
             item_documents.append(i)
         elif item.type == 'Clothing':
@@ -37,7 +38,8 @@ def insert_data(item_list):
                     "currency": item.currency,
                     "brand": item.brand,
                     "type" : item.type,
-                    "seller" : item.seller
+                    "seller" : item.seller,
+                    "original_price": item.original_price
                 }
             item_documents.append(i)
         elif item.type == 'Video Game':
@@ -50,7 +52,8 @@ def insert_data(item_list):
                     "currency": item.currency,
                     "type" : item.type,
                     "seller" : item.seller,
-                    "format" : item.format
+                    "format" : item.format,
+                    "original_price": item.original_price
                 }
             item_documents.append(i)
 
