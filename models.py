@@ -13,6 +13,7 @@ class Item(BaseModel):
     currency: str = Field(...)
     type: str = Field(...)
     seller: str = Field(...)
+    original_price: float = Field(...)
 
     #class Config:
     #    allow_population_by_field_name = True
@@ -65,3 +66,11 @@ class ItemUpdate(BaseModel):
                 "currency": "$"
             }
         }
+
+class AlertEmailItem:
+    def __init__(self, product_name, product_url, sale_price, original_price, currency):
+        self.product_name = product_name
+        self.product_url = product_url
+        self.sale_price = sale_price
+        self.original_price = original_price
+        self.currency = currency

@@ -24,7 +24,8 @@ def insert_data(item_list):
                     "format": item.format,
                     "currency": item.currency,
                     "type" : item.type,
-                    "seller" : item.seller
+                    "seller" : item.seller,
+                    "original_price": item.original_price
                 }
             item_documents.append(i)
         elif item.type == 'Clothing':
@@ -37,7 +38,8 @@ def insert_data(item_list):
                     "currency": item.currency,
                     "brand": item.brand,
                     "type" : item.type,
-                    "seller" : item.seller
+                    "seller" : item.seller,
+                    "original_price": item.original_price
                 }
             item_documents.append(i)
         elif item.type == 'Video Game':
@@ -50,7 +52,8 @@ def insert_data(item_list):
                     "currency": item.currency,
                     "type" : item.type,
                     "seller" : item.seller,
-                    "format" : item.format
+                    "format" : item.format,
+                    "original_price": item.original_price
                 }
             item_documents.append(i)
 
@@ -63,7 +66,7 @@ def update_data(item):
     client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
     # get the database and collection on which to run the operation
-    collection = client['price_drop_alert']['amazon_item_lookup']
+    collection = client['price_drop_alert']['item_lookup']
 
     # query documents
     query_filter = {'product_id' : '0593582128'}

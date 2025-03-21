@@ -5,8 +5,8 @@ from selenium_stealth import stealth
 
 from price_parser import Price
 
-import PriceDropAlert.models as item
-import PriceDropAlert.data_logic as data_logic
+import models as item
+import data_logic as data_logic
 import copy
 
 def get_price(item_list):
