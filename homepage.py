@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 import pymongo
-import PriceDropAlert.data_logic as data_logic
-import PriceDropAlert.models as item
+import models as item
 from datetime import datetime
-import PriceDropAlert.scraper as scraper
+import scraper
 
 # connect to the Atlas cluster
 client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')

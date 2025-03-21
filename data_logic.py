@@ -1,5 +1,7 @@
 import pymongo
-import PriceDropAlert.crud_data as crud_data
+import crud_data
+import models
+import send_email
 
 def insert_item(item):
     # connect to the Atlas cluster
@@ -48,6 +50,7 @@ def insert_items(item_list_to_insert, item_list):
                 latest_item_map[i.product_id] = i 
 
         item_insert_list = []
+        email_alert_list = []
 
         #if the item's current price is less than the latest entry, then insert into the database
         for i in item_list_to_insert:
@@ -63,6 +66,9 @@ def insert_items(item_list_to_insert, item_list):
                     item_insert_list.append(i)
                     if price_difference_percentage >= 0.10:
                         print('The price difference is: ' + str(price_difference_percentage) + ', which is at least 10%')
+                        #email_alert_item = models.AlertEmailItem(i.name, i.url, i.price, latest_item.price, i.currency)
+                        email_alert_item = models.AlertEmailItem(i.name, i.url, i.price, i.original_price, i.currency)
+                        email_alert_list.append(email_alert_item)
             #the item does not currently exist in the database
             else:
                 #insert the new item into the database
@@ -70,6 +76,8 @@ def insert_items(item_list_to_insert, item_list):
         #insert items if there are new entries or items where there is an acceptable discount percentage
         if (len(item_insert_list) > 0):
             crud_data.insert_data(item_insert_list)
+        if (len(email_alert_list) > 0):
+            send_email.send_mail(email_alert_list)
         client.close()
     except Exception as e:
         raise Exception("Error retrieving documents: ", e)
