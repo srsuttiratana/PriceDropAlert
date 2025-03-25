@@ -9,6 +9,10 @@ import models as item
 import data_logic as data_logic
 import copy
 
+import tldextract
+import re
+from datetime import datetime
+
 def get_price(item_list):
     options = webdriver.ChromeOptions()
 
@@ -137,3 +141,110 @@ def get_price(item_list):
     # close the browser and release its resources
 
     driver.quit()
+
+def add_new_product_info(url):
+    options = webdriver.ChromeOptions()
+
+    options.add_argument("--headless")
+
+    # start a Chrome instance
+
+    driver = webdriver.Chrome(options=options)
+
+    # configure the WebDriver to avoid bot detection
+
+    # with Selenium Stealth
+
+    stealth(
+
+    driver,
+
+    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+
+    languages=["en-US", "en"],
+
+    vendor="Google Inc.",
+
+    platform="Win32",
+
+    webgl_vendor="Intel Inc.",
+
+    renderer="Intel Iris OpenGL Engine",
+
+    fix_hairline=True,
+
+    )
+
+    item_list_to_insert = []
+    #connect to the URL
+    driver.get(url)
+    htmlMarkup = driver.page_source
+
+    #get host name to determine the website
+    extracted = tldextract.extract(url)
+    hostname = extracted.domain.lower()
+
+    soup = BeautifulSoup(htmlMarkup, 'html5lib') # If this line causes an error, run 'pip install html5lib' or install html5lib
+    #print(soup.prettify())
+
+    new_item = {}
+    if hostname == 'uniqlo':
+        new_item_brand = 'Uniqlo'
+        new_item_type = 'Clothing'
+        new_item_seller = 'Uniqlo'
+        new_item_url = url
+        new_item_price = 0.0
+        new_item_currency = ''
+        new_item_original_price = 0.0
+        new_item_name = ''
+        new_item_product_id = ''
+
+        #fetch the product info
+        try:
+            clothing_info = soup.find('div', attrs={'id': 'root'})
+            #get price and currency
+            for row in clothing_info.find_all('p', attrs={'class': 'fr-ec-price-text fr-ec-price-text--large fr-ec-price-text--color-primary-dark fr-ec-text-transform-normal'}):
+                price = Price.fromstring(row.text)
+                print (price.amount_text)
+                new_item_price = price.amount_float
+                new_item_currency = price.currency
+                new_item_original_price = price.amount_float
+            #get product info
+            for row in clothing_info.find_all('h1', attrs={'class': 'fr-ec-display fr-ec-display--color-primary-dark fr-ec-display--display5 fr-ec-text-align-left fr-ec-text-transform-normal'}):
+                product_name = row.text
+                print('Product Name: ' + product_name)
+                new_item_name = product_name
+            #get product ID
+            for row in clothing_info.find_all('p', attrs={'class': 'fr-ec-caption fr-ec-caption--color-primary-dark fr-ec-text-align-left fr-ec-mb-spacing-04 fr-ec-caption--standard fr-ec-text-transform-normal'}):
+                product_id = get_characters_after_text_string(row.text, 'Product ID: ')
+                print('Product ID: ' + product_id)
+                new_item_product_id = product_id
+        except:
+            print('Unable to retrieve product info for url: ' + url)
+    
+        #insert uniqlo item into database
+        try:
+            new_item = item.Clothing(datetime_created=datetime.now(), product_id=new_item_product_id, brand=new_item_brand, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name)
+            item_list_to_insert = [new_item]
+            data_logic.insert_new_items(item_list_to_insert)
+        except Exception as e:
+            raise Exception("Error inserting new item: ", e)
+
+    driver.quit()
+
+#helper function to get characters in text_input after a certain string (text_to_skip)
+def get_characters_after_text_string(text_input, text_to_skip):
+    # Regular expression to find characters after the specific string
+    pattern = re.compile(rf'{text_to_skip}(.*)')
+
+    # Search for the pattern in the text
+    match = pattern.search(text_input)
+
+    # Extract and print the characters after the specific string
+    if match:
+        result = match.group(1).strip()
+        print(result)
+        return result
+    else:
+        print("The specific string was not found.")
+        return ''
