@@ -81,3 +81,9 @@ def insert_items(item_list_to_insert, item_list):
         client.close()
     except Exception as e:
         raise Exception("Error retrieving documents: ", e)
+    
+def insert_new_items(item_list):
+    try:
+        crud_data.insert_data(item_list)
+    except Exception as e:
+        raise Exception("Error inserting new items: ", e)
