@@ -100,7 +100,7 @@ def get_price(item_list):
         elif item.type == 'Video Game':
             if item.seller == 'Best Buy':
                 try:
-                    gamePrice = soup.find('div', attrs={'class': 'pricing-price'})
+                    gamePrice = soup.find('div', attrs={'class': 'priceView-hero-price priceView-customer-price'})
                     #print('Game Price: ')
                     #print(gamePrice)
                     for row in gamePrice.find_all('span', attrs={'aria-hidden': 'true'}):
@@ -229,6 +229,77 @@ def add_new_product_info(url):
             data_logic.insert_new_items(item_list_to_insert)
         except Exception as e:
             raise Exception("Error inserting new item: ", e)
+    #create new item for Best Buy
+    elif hostname == 'bestbuy':
+        new_item_type = ''
+        new_item_seller = 'Best Buy'
+        new_item_url = url
+        new_item_price = 0.0
+        new_item_currency = ''
+        new_item_original_price = 0.0
+        new_item_name = ''
+        new_item_product_id = ''
+        new_item_format = ''
+
+        #fetch the product info
+        try:
+            electronic_info = soup.find('div', attrs={'class': 'nav-container flex flex-xs-row'})
+            print('electronic_info: ')
+            #get type and format
+            for row in electronic_info.find_all('a', attrs={'data-track': 'Breadcrumb'}):
+                product_type = row.text
+                print('Product Type: ' + product_type)
+                if product_type != "":
+                    product_type_lower = product_type.lower() 
+                if "video game" in product_type_lower:
+                    new_item_type = 'Video Game'
+                    print('Item Type: ' + new_item_type)
+                if "physical" in product_type_lower:
+                    new_item_format = 'Physical'
+                    print('Item Format: ' + new_item_format)
+                if "digital" in product_type_lower:
+                    new_item_format = 'Digital'
+                    print('Item Format: ' + new_item_format)
+            #get product info
+            product_name_info = soup.find('div', attrs={'class': 'shop-product-title'})
+            for row in product_name_info.find_all('div', attrs={'class': 'sku-title'}):
+                product_name = row.text
+                print('Product Name: ' + product_name)
+                new_item_name = product_name
+            #get product ID
+            for row in product_name_info.find_all('div', attrs={'class': 'title-data lv esrb-layout'}):
+                start_string = 'SKU:'
+                end_string = 'Release Date'
+                product_id = get_text_between(row.text, start_string, end_string).rstrip()
+                print('Product ID: ' + product_id)
+                new_item_product_id = product_id
+            #get product price
+            try:
+                gamePrice = soup.find('div', attrs={'class': 'priceView-hero-price priceView-customer-price'})
+                #print('Game Price: ')
+                #print(gamePrice)
+                for row in gamePrice.find_all('span', attrs={'aria-hidden': 'true'}):
+                    price = Price.fromstring(row.text)
+                    print (price.amount_text)
+                    new_item_price = price.amount_float
+                    new_item_currency = price.currency
+                    new_item_original_price = price.amount_float
+            except:
+                print('Unable to retrieve price for: ' + new_item_name)
+        except Exception as e:
+            print('Unable to retrieve product info for url: ' + url)
+            raise Exception('Error retrieving Best Buy item: ', e)
+    
+        #insert best buy item into database
+        try:
+            new_item = {}
+            if new_item_type == 'Video Game':
+                new_item = item.VideoGame(datetime_created=datetime.now(), product_id=new_item_product_id, format=new_item_format, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name)
+            if new_item != {}:
+                item_list_to_insert = [new_item]
+                data_logic.insert_new_items(item_list_to_insert)
+        except Exception as e:
+            raise Exception("Error inserting new item: ", e)
 
     driver.quit()
 
@@ -248,3 +319,17 @@ def get_characters_after_text_string(text_input, text_to_skip):
     else:
         print("The specific string was not found.")
         return ''
+    
+#helper function to get characters in text_input between start_text_string and end_text_string
+def get_text_between(input_string, start_string, end_string):
+    # Create a regex pattern to match text between start_string and end_string
+    pattern = re.escape(start_string) + r'(.*?)' + re.escape(end_string)
+    
+    # Search for the pattern in the input_string
+    match = re.search(pattern, input_string)
+    
+    # If a match is found, return the captured group (text between start_string and end_string)
+    if match:
+        return match.group(1)
+    else:
+        return None
