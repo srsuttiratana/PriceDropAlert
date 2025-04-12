@@ -3,6 +3,10 @@ import crud_data
 import models
 import send_email
 
+from datetime import datetime
+
+import save_logs
+
 def insert_item(item):
     # connect to the Atlas cluster
     client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
@@ -51,6 +55,7 @@ def insert_items(item_list_to_insert, item_list):
 
         item_insert_list = []
         email_alert_list = []
+        log_list_to_insert = []
 
         #if the item's current price is less than the latest entry, then insert into the database
         for i in item_list_to_insert:
@@ -80,10 +85,23 @@ def insert_items(item_list_to_insert, item_list):
             send_email.send_mail(email_alert_list)
         client.close()
     except Exception as e:
-        raise Exception("Error retrieving documents: ", e)
+        print('Unable to insert items: ', e)
+        l = models.Log(datetime_created=datetime.now(), product_id=item_insert_list, url='', exception_type=str(e), error_message=repr(e))
+        log_list_to_insert.append(l)
+
+    #insert error logs if there are any errors
+    if len(log_list_to_insert) > 0:
+        insert_logs(log_list_to_insert)
     
 def insert_new_items(item_list):
     try:
         crud_data.insert_data(item_list)
     except Exception as e:
         raise Exception("Error inserting new items: ", e)
+    
+#for inserting new error logs
+def insert_logs(log_list):
+    try:
+        save_logs.insert_log_data(log_list)
+    except Exception as e:
+        raise Exception("Error inserting new logs: ", e)
