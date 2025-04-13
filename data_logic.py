@@ -7,6 +7,8 @@ from datetime import datetime
 
 import save_logs
 
+log_list_to_insert = []
+
 def insert_item(item):
     # connect to the Atlas cluster
     client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
@@ -99,9 +101,19 @@ def insert_new_items(item_list):
     except Exception as e:
         raise Exception("Error inserting new items: ", e)
     
-#for inserting new error logs
-def insert_logs(log_list):
+#for adding new error logs
+def add_log(exception, product_id = '', url = '', subject = ''):
     try:
-        save_logs.insert_log_data(log_list)
+        log_list_to_insert.append(models.Log(datetime_created=datetime.now(), product_id=product_id, url=url, subject=subject, exception_type=str(exception), error_message=repr(exception)))
+    except Exception as e:
+        raise Exception("Error adding new logs: ", e)
+
+#for inserting new error logs
+def insert_logs():
+    try:
+        if len(log_list_to_insert) > 0:
+            save_logs.insert_log_data(log_list_to_insert)
+            #clear out log list
+            log_list_to_insert = []
     except Exception as e:
         raise Exception("Error inserting new logs: ", e)

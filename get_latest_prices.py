@@ -6,11 +6,12 @@ import scraper
 import models
 import data_logic
 
+from save_logs import Logger
+
 # connect to the Atlas cluster
 client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
 list_of_items = []
-log_list_to_insert = []
 try:
     # get the database and collection on which to run the operation
     collection = client['price_drop_alert']['item_lookup']
@@ -51,9 +52,8 @@ try:
     scraper.get_price(list_of_items)
 
 except Exception as e:
-    l = models.Log(datetime_created=datetime.now(), product_id=item.product_id, url=item.url, subject='Not Able to Retrieve Price', exception_type=str(e), error_message=repr(e))
-    log_list_to_insert.append(l)
-    data_logic.insert_logs(log_list_to_insert)
+    Logger.add_log(product_id=item.product_id, url=item.url, subject='Not Able to Retrieve Price', exception=e)
+    Logger.insert_logs()
     raise Exception("Error retrieving documents: ", e)
 
 app = FastAPI()
