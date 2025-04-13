@@ -5,13 +5,15 @@ from selenium_stealth import stealth
 
 from price_parser import Price
 
-import models as item
+import models
 import data_logic as data_logic
 import copy
 
 import tldextract
 import re
 from datetime import datetime
+
+from save_logs import Logger
 
 def get_price(item_list):
     options = webdriver.ChromeOptions()
@@ -66,8 +68,9 @@ def get_price(item_list):
                         if item.price > price.amount_float:
                             item.price = price.amount_float
                             item_list_to_insert.append(item)
-                except:
+                except Exception as e:
                     print('Unable to retrieve price for: ' + item.name)
+                    Logger.add_log(product_id=item.product_id, url=item.url, subject='Not Able to Retrieve Price', exception=e)
 
         elif item.type == 'Clothing':
             if item.seller == 'Vuori':
@@ -81,8 +84,9 @@ def get_price(item_list):
                         if item.price > price.amount_float:
                             item.price = price.amount_float
                             item_list_to_insert.append(item)
-                except:
+                except Exception as e:
                     print('Unable to retrieve price for: ' + item.name)
+                    Logger.add_log(product_id=item.product_id, url=item.url, subject='Not Able to Retrieve Price', exception=e)
             elif item.seller == 'Uniqlo':
                 try:
                     clothingPrice = soup.find('div', attrs={'id': 'root'})
@@ -95,8 +99,9 @@ def get_price(item_list):
                             deep_copy_item = copy.deepcopy(item)
                             deep_copy_item.price = price.amount_float
                             item_list_to_insert.append(deep_copy_item)
-                except:
+                except Exception as e:
                     print('Unable to retrieve price for: ' + item.name)
+                    Logger.add_log(product_id=item.product_id, url=item.url, subject='Not Able to Retrieve Price', exception=e)
         elif item.type == 'Video Game':
             if item.seller == 'Best Buy':
                 try:
@@ -110,11 +115,15 @@ def get_price(item_list):
                             deep_copy_item = copy.deepcopy(item)
                             deep_copy_item.price = price.amount_float
                             item_list_to_insert.append(deep_copy_item)
-                except:
+                except Exception as e:
                     print('Unable to retrieve price for: ' + item.name)
+                    Logger.add_log(product_id=item.product_id, url=item.url, subject='Not Able to Retrieve Price', exception=e)
     
     if len(item_list_to_insert) > 0:
         data_logic.insert_items(item_list_to_insert, item_list)
+    
+    #insert error logs if there are any errors
+    Logger.insert_logs()
 
     # get the current window size
 
@@ -219,16 +228,18 @@ def add_new_product_info(url):
                 product_id = get_characters_after_text_string(row.text, 'Product ID: ')
                 print('Product ID: ' + product_id)
                 new_item_product_id = product_id
-        except:
+        except Exception as e:
             print('Unable to retrieve product info for url: ' + url)
+            Logger.add_log(product_id=new_item_product_id, url=new_item_url, subject='Not Able to Retrieve Product Info', exception=e)
     
         #insert uniqlo item into database
         try:
-            new_item = item.Clothing(datetime_created=datetime.now(), product_id=new_item_product_id, brand=new_item_brand, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name)
+            new_item = models.Clothing(datetime_created=datetime.now(), product_id=new_item_product_id, brand=new_item_brand, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name)
             item_list_to_insert = [new_item]
             data_logic.insert_new_items(item_list_to_insert)
         except Exception as e:
-            raise Exception("Error inserting new item: ", e)
+            print("Error inserting new item: " + e)
+            Logger.add_log(product_id=new_item_product_id, url=new_item_url, subject='Not Able to Insert New Product Info', exception=e)
     #create new item for Best Buy
     elif hostname == 'bestbuy':
         new_item_type = ''
@@ -284,22 +295,27 @@ def add_new_product_info(url):
                     new_item_price = price.amount_float
                     new_item_currency = price.currency
                     new_item_original_price = price.amount_float
-            except:
+            except Exception as e:
                 print('Unable to retrieve price for: ' + new_item_name)
+                Logger.add_log(product_id=new_item_product_id, url=new_item_url, subject='Not Able to Retrieve Price Info for New Product', exception=e)
         except Exception as e:
             print('Unable to retrieve product info for url: ' + url)
-            raise Exception('Error retrieving Best Buy item: ', e)
+            Logger.add_log(product_id=new_item_product_id, url=new_item_url, subject='Not Able to Retrieve Product Info', exception=e)
     
         #insert best buy item into database
         try:
             new_item = {}
             if new_item_type == 'Video Game':
-                new_item = item.VideoGame(datetime_created=datetime.now(), product_id=new_item_product_id, format=new_item_format, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name)
+                new_item = models.VideoGame(datetime_created=datetime.now(), product_id=new_item_product_id, format=new_item_format, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name)
             if new_item != {}:
                 item_list_to_insert = [new_item]
                 data_logic.insert_new_items(item_list_to_insert)
         except Exception as e:
-            raise Exception("Error inserting new item: ", e)
+            print("Error inserting new item: " + e)
+            Logger.add_log(product_id=new_item_product_id, url=new_item_url, subject='Not Able to Insert New Product Info', exception=e)
+
+    #insert error logs if there are any errors
+    Logger.insert_logs()
 
     driver.quit()
 

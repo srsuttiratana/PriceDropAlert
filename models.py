@@ -74,3 +74,12 @@ class AlertEmailItem:
         self.sale_price = sale_price
         self.original_price = original_price
         self.currency = currency
+
+class Log(BaseModel):
+    id: str = Field(default_factory=uuid.uuid4, alias="_id")
+    datetime_created: datetime = Field(...)
+    product_id: str = Field(...)
+    url: str = Field(...)
+    subject: str = Field(...)
+    exception_type: str = Field(...)
+    error_message: str = Field(...)

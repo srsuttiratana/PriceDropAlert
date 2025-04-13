@@ -3,6 +3,10 @@ import pymongo
 import models as item
 from datetime import datetime
 import scraper
+import models
+import data_logic
+
+from save_logs import Logger
 
 # connect to the Atlas cluster
 client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
@@ -48,6 +52,8 @@ try:
     scraper.get_price(list_of_items)
 
 except Exception as e:
+    Logger.add_log(product_id=item.product_id, url=item.url, subject='Not Able to Retrieve Price', exception=e)
+    Logger.insert_logs()
     raise Exception("Error retrieving documents: ", e)
 
 app = FastAPI()
