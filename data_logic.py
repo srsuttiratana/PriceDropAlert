@@ -6,6 +6,7 @@ import send_email
 from datetime import datetime
 
 import save_logs
+import copy
 
 log_list_to_insert = []
 
@@ -34,7 +35,7 @@ def insert_item(item):
     except Exception as e:
         raise Exception("Error retrieving documents: ", e)
     
-def insert_items(item_list_to_insert, item_list):
+def insert_items(item_list_to_insert):
     # connect to the Atlas cluster
     client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
@@ -49,11 +50,35 @@ def insert_items(item_list_to_insert, item_list):
         #get the items using the product_ids, get the latest entries
         latest_item_map = {}
         #latest_item_list = collection.find({"product_id": {"$in": product_id_list}}, fields_to_query, sort=[('_id', pymongo.DESCENDING)])
+        # get the database and collection on which to run the operation
+        collection = client['price_drop_alert']['item_lookup']
+
+        all_items = [
+            {
+                '$sort': {'id': -1}  # Sort by id in descending order
+            },
+            {
+                '$group': {
+                    '_id': {
+                        'product_id': '$product_id',  # Group by the field you want distinct values for
+                        'email': '$email'
+                    },
+                    'latestEntry': {'$last': '$$ROOT'}  # Get the latest entry for each group
+                }
+            },
+            {
+                '$replaceRoot': {'newRoot': '$latestEntry'}  # Replace the root with the latest entry document
+            }
+        ]
+
+        latest_items_with_email = list(collection.aggregate(all_items))
 
         #create map of items from the database with product_id as the key
-        for i in item_list:
-            if i.product_id not in latest_item_map.keys():
+        for i in latest_items_with_email:
+            if (i.product_id) not in latest_item_map.keys():
                 latest_item_map[i.product_id] = i 
+            else:
+                latest_item_map[i.product_id].add(i)
 
         item_insert_list = []
         email_alert_list = []
@@ -61,21 +86,25 @@ def insert_items(item_list_to_insert, item_list):
 
         #if the item's current price is less than the latest entry, then insert into the database
         for i in item_list_to_insert:
-            #get the latest entry of the item, and if it doesn't exist, then set value to 'Default'
-            latest_item = latest_item_map.get(i.product_id, 'Default')
+            #get the latest entries of the item, and if it doesn't exist, then set value to 'Default'
+            latest_items = latest_item_map.get(i.product_id, 'Default')
             #the item exists in the database
-            if latest_item != 'Default': 
-                print(latest_item.price)
-                print(i.price)
-                if latest_item.price > i.price:
-                    #if the item's price difference is at least 10%, then print for now
-                    price_difference_percentage = ((latest_item.price - i.price) / latest_item.price)
-                    item_insert_list.append(i)
-                    if price_difference_percentage >= 0.10:
-                        print('The price difference is: ' + str(price_difference_percentage) + ', which is at least 10%')
-                        #email_alert_item = models.AlertEmailItem(i.name, i.url, i.price, latest_item.price, i.currency)
-                        email_alert_item = models.AlertEmailItem(i.name, i.url, i.price, i.original_price, i.currency)
-                        email_alert_list.append(email_alert_item)
+            if latest_items != 'Default': 
+                #update price for all entries with the same product id but with different emails
+                for li in latest_items:
+                    print(li.price)
+                    print(i.price)
+                    if li.price > i.price:
+                        #if the item's price difference is at least 10%, then print for now
+                        price_difference_percentage = ((li.price - i.price) / li.price)
+                        deep_copy_item = copy.deepcopy(li)
+                        deep_copy_item.price = i.price
+                        item_insert_list.append(deep_copy_item)
+                        if price_difference_percentage >= 0.10:
+                            print('The price difference is: ' + str(price_difference_percentage) + ', which is at least 10%')
+                            #email_alert_item = models.AlertEmailItem(i.name, i.url, i.price, latest_item.price, i.currency)
+                            email_alert_item = models.AlertEmailItem(deep_copy_item.name, deep_copy_item.url, deep_copy_item.price, deep_copy_item.original_price, deep_copy_item.currency, deep_copy_item.email)
+                            email_alert_list.append(email_alert_item)
             #the item does not currently exist in the database
             else:
                 #insert the new item into the database
