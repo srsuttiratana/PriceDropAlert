@@ -92,7 +92,16 @@ def get_price(item_list):
                     clothingPrice = soup.find('div', attrs={'id': 'root'})
                     #print('Clothing Price: ')
                     #print(clothingPrice)
+                    #regular price
                     for row in clothingPrice.find_all('p', attrs={'class': 'fr-ec-price-text fr-ec-price-text--large fr-ec-price-text--color-primary-dark fr-ec-text-transform-normal'}):
+                        price = Price.fromstring(row.text)
+                        print (price.amount_text)
+                        if item.price > price.amount_float:
+                            deep_copy_item = copy.deepcopy(item)
+                            deep_copy_item.price = price.amount_float
+                            item_list_to_insert.append(deep_copy_item)
+                    #promotions/sales
+                    for row in clothingPrice.find_all('p', attrs={'class': 'fr-ec-price-text fr-ec-price-text--large fr-ec-price-text--color-promotional fr-ec-text-transform-normal'}):
                         price = Price.fromstring(row.text)
                         print (price.amount_text)
                         if item.price > price.amount_float:
@@ -120,7 +129,7 @@ def get_price(item_list):
                     Logger.add_log(product_id=item.product_id, url=item.url, subject='Not Able to Retrieve Price', exception=e)
     
     if len(item_list_to_insert) > 0:
-        data_logic.insert_items(item_list_to_insert, item_list)
+        data_logic.insert_items(item_list_to_insert)
     
     #insert error logs if there are any errors
     Logger.insert_logs()
@@ -151,7 +160,7 @@ def get_price(item_list):
 
     driver.quit()
 
-def add_new_product_info(url):
+def add_new_product_info(url, email):
     options = webdriver.ChromeOptions()
 
     options.add_argument("--headless")
@@ -207,6 +216,7 @@ def add_new_product_info(url):
         new_item_original_price = 0.0
         new_item_name = ''
         new_item_product_id = ''
+        new_item_email = email
 
         #fetch the product info
         try:
@@ -234,7 +244,7 @@ def add_new_product_info(url):
     
         #insert uniqlo item into database
         try:
-            new_item = models.Clothing(datetime_created=datetime.now(), product_id=new_item_product_id, brand=new_item_brand, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name)
+            new_item = models.Clothing(datetime_created=datetime.now(), product_id=new_item_product_id, brand=new_item_brand, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name, email=new_item_email)
             item_list_to_insert = [new_item]
             data_logic.insert_new_items(item_list_to_insert)
         except Exception as e:
@@ -251,6 +261,7 @@ def add_new_product_info(url):
         new_item_name = ''
         new_item_product_id = ''
         new_item_format = ''
+        new_item_email = email
 
         #fetch the product info
         try:
@@ -306,7 +317,7 @@ def add_new_product_info(url):
         try:
             new_item = {}
             if new_item_type == 'Video Game':
-                new_item = models.VideoGame(datetime_created=datetime.now(), product_id=new_item_product_id, format=new_item_format, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name)
+                new_item = models.VideoGame(datetime_created=datetime.now(), product_id=new_item_product_id, format=new_item_format, type=new_item_type, seller=new_item_seller, url=new_item_url, price=new_item_price, original_price=new_item_original_price, currency=new_item_currency, name=new_item_name, email=new_item_email)
             if new_item != {}:
                 item_list_to_insert = [new_item]
                 data_logic.insert_new_items(item_list_to_insert)
