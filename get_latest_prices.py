@@ -52,7 +52,7 @@ try:
     scraper.get_price(list_of_items)
 
 except Exception as e:
-    Logger.add_log(product_id=item.product_id, url=item.url, subject='Not Able to Retrieve Price', exception=e)
+    Logger.add_log(product_id=item.Item.product_id, url=item.Item.url, subject='Not Able to Retrieve Price', exception=e)
     Logger.insert_logs()
     raise Exception("Error retrieving documents: ", e)
 

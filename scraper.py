@@ -92,7 +92,16 @@ def get_price(item_list):
                     clothingPrice = soup.find('div', attrs={'id': 'root'})
                     #print('Clothing Price: ')
                     #print(clothingPrice)
+                    #regular price
                     for row in clothingPrice.find_all('p', attrs={'class': 'fr-ec-price-text fr-ec-price-text--large fr-ec-price-text--color-primary-dark fr-ec-text-transform-normal'}):
+                        price = Price.fromstring(row.text)
+                        print (price.amount_text)
+                        if item.price > price.amount_float:
+                            deep_copy_item = copy.deepcopy(item)
+                            deep_copy_item.price = price.amount_float
+                            item_list_to_insert.append(deep_copy_item)
+                    #promotions/sales
+                    for row in clothingPrice.find_all('p', attrs={'class': 'fr-ec-price-text fr-ec-price-text--large fr-ec-price-text--color-promotional fr-ec-text-transform-normal'}):
                         price = Price.fromstring(row.text)
                         print (price.amount_text)
                         if item.price > price.amount_float:

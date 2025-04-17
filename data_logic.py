@@ -1,11 +1,11 @@
 import pymongo
 import crud_data
-import models
+import models as item
 import send_email
 
 from datetime import datetime
 
-import save_logs
+from save_logs import Logger
 import copy
 
 log_list_to_insert = []
@@ -39,6 +39,7 @@ def insert_items(item_list_to_insert):
     # connect to the Atlas cluster
     client = pymongo.MongoClient('mongodb+srv://sarahsuttiratana:M5UtSEPIeJvhSxVu@cluster0.7pcov.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
+    item_insert_list = []
     try:
         # get the database and collection on which to run the operation
         #collection = client['price_drop_alert']['item_lookup']
@@ -75,14 +76,25 @@ def insert_items(item_list_to_insert):
 
         #create map of items from the database with product_id as the key
         for i in latest_items_with_email:
-            if (i.product_id) not in latest_item_map.keys():
-                latest_item_map[i.product_id] = i 
-            else:
-                latest_item_map[i.product_id].add(i)
+            i['id'] = str(i.pop('_id'))
+            i['type'] = str(i.pop('type'))
+            item_temp = {}
+            if i['type'] == 'Book':
+                item_temp = item.Book(**i)
+            elif i['type'] == 'Clothing':
+                item_temp = item.Clothing(**i)
+            elif i['type'] == 'Video Game':
+                item_temp = item.VideoGame(**i)
+            print('item_temp 2: ')
+            print(item_temp)
+        
+            if item_temp:
+                if (item_temp.product_id) not in latest_item_map.keys():
+                    latest_item_map[item_temp.product_id] = [item_temp]
+                else:
+                    latest_item_map[item_temp.product_id].append(item_temp)
 
-        item_insert_list = []
         email_alert_list = []
-        log_list_to_insert = []
 
         #if the item's current price is less than the latest entry, then insert into the database
         for i in item_list_to_insert:
@@ -92,8 +104,6 @@ def insert_items(item_list_to_insert):
             if latest_items != 'Default': 
                 #update price for all entries with the same product id but with different emails
                 for li in latest_items:
-                    print(li.price)
-                    print(i.price)
                     if li.price > i.price:
                         #if the item's price difference is at least 10%, then print for now
                         price_difference_percentage = ((li.price - i.price) / li.price)
@@ -103,7 +113,7 @@ def insert_items(item_list_to_insert):
                         if price_difference_percentage >= 0.10:
                             print('The price difference is: ' + str(price_difference_percentage) + ', which is at least 10%')
                             #email_alert_item = models.AlertEmailItem(i.name, i.url, i.price, latest_item.price, i.currency)
-                            email_alert_item = models.AlertEmailItem(deep_copy_item.name, deep_copy_item.url, deep_copy_item.price, deep_copy_item.original_price, deep_copy_item.currency, deep_copy_item.email)
+                            email_alert_item = item.AlertEmailItem(deep_copy_item.name, deep_copy_item.url, deep_copy_item.price, deep_copy_item.original_price, deep_copy_item.currency, deep_copy_item.email)
                             email_alert_list.append(email_alert_item)
             #the item does not currently exist in the database
             else:
@@ -117,32 +127,12 @@ def insert_items(item_list_to_insert):
         client.close()
     except Exception as e:
         print('Unable to insert items: ', e)
-        l = models.Log(datetime_created=datetime.now(), product_id=item_insert_list, url='', exception_type=str(e), error_message=repr(e))
-        log_list_to_insert.append(l)
+        Logger.add_log(product_id='', url='', subject='Unable to insert items', exception=e)
 
-    #insert error logs if there are any errors
-    if len(log_list_to_insert) > 0:
-        insert_logs(log_list_to_insert)
+    Logger.insert_logs()
     
 def insert_new_items(item_list):
     try:
         crud_data.insert_data(item_list)
     except Exception as e:
         raise Exception("Error inserting new items: ", e)
-    
-#for adding new error logs
-def add_log(exception, product_id = '', url = '', subject = ''):
-    try:
-        log_list_to_insert.append(models.Log(datetime_created=datetime.now(), product_id=product_id, url=url, subject=subject, exception_type=str(exception), error_message=repr(exception)))
-    except Exception as e:
-        raise Exception("Error adding new logs: ", e)
-
-#for inserting new error logs
-def insert_logs():
-    try:
-        if len(log_list_to_insert) > 0:
-            save_logs.insert_log_data(log_list_to_insert)
-            #clear out log list
-            log_list_to_insert = []
-    except Exception as e:
-        raise Exception("Error inserting new logs: ", e)
